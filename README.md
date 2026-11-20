@@ -17,16 +17,19 @@ L'objectiu principal és aplicar estructures de dades complexes per optimitzar l
 ├── README.md                    # Aquest fitxer
 ├── project_guide.md             # Enunciat complet de la pràctica
 ├── src/                         # Codi d'exemple i templates
-│   └── Submission_1/            # Primer lliurament (Gestió d'imatges generades)
-│       ├── cfg.py                   # Configuració del projecte
-│       ├── test-images.py           # Script de proves amb metadades PNG
-│       ├── p1_main.py               # Template del main (opcional)
-│       ├── ImageFiles.py            # Template: Gestió de llistat d'imatges
-│       ├── ImageID.py               # Template: Generació d'identificadors UUID
-│       ├── ImageData.py             # Template: Gestió de metadades
-│       ├── ImageViewer.py           # Template: Visualització d'imatges
-│       ├── Gallery.py               # Template: Gestió de galeries JSON
-│       └── SearchMetadata.py        # Template: Cerca per metadades
+│   ├── Submission_1/            # Primer lliurament (Gestió d'imatges generades)
+│   │   ├── cfg.py                   # Configuració del projecte
+│   │   ├── test-images.py           # Script de proves amb metadades PNG
+│   │   ├── p1_main.py               # Template del main (opcional)
+│   │   ├── ImageFiles.py            # Template: Gestió de llistat d'imatges
+│   │   ├── ImageID.py               # Template: Generació d'identificadors UUID
+│   │   ├── ImageData.py             # Template: Gestió de metadades
+│   │   ├── ImageViewer.py           # Template: Visualització d'imatges
+│   │   ├── Gallery.py               # Template: Gestió de galeries JSON
+│   │   └── SearchMetadata.py        # Template: Cerca per metadades
+│   └── Submission_2/            # Segon lliurament (Sistema de Recomanació)
+│       ├── RecommenderSystem.py     # Sistema de recomanació amb CLIP embeddings
+│       └── autograder_student.py    # Template de l'autograder per testing
 │
 └── media/                       # Imatges i diagrames de la guia
 ```
@@ -57,6 +60,14 @@ L'enunciat (`project_guide.md`) inclou:
 - **Func6:** Cerca per criteris (prompts, models, dates, etc.)
 - **Func7:** Creació dinàmica de galeries
 
+### 4. **Segon lliurament (Submission_2)** - Competició de Recomanació
+
+- **Fase 1:** Optimització de cerques de metadades (20 punts)
+- **Fase 2:** Similitud d'imatges usant CLIP embeddings (40 punts)
+- **Fase 3:** Camins de transició entre imatges (40 punts)
+- Explicació de representacions numèriques (embeddings) i similitud semàntica
+- Guia d'optimització i ús d'estructures de dades eficients
+
 ## Dataset
 
 ### Origen i Contingut
@@ -66,6 +77,7 @@ El projecte utilitza un subconjunt del dataset **DiffusionDB** amb imatges gener
 ### Tamany del Dataset
 
 - **Lliurament 1:** 1,000 imatges (per a testing local i desenvolupament)
+- **Lliurament 2 (Competició):** 10,000 imatges (per a l'avaluació automàtica)
 
 ### Metadades
 
@@ -77,6 +89,13 @@ Les metadades estan embegudes directament dins els fitxers PNG (no en fitxers se
 - **Created_Date:** Data de creació
 - **Generated:** Indicador que és una imatge generada amb IA
 
+### Recursos addicionals per al Lliurament 2
+
+- **clip_vectors.json:** Vectors CLIP precalculats (embeddings de 512 dimensions) per a totes les 10,000 imatges
+- **Dos conjunts d'imatges:**
+  - *Full:* Imatges completes amb tota la qualitat visual (~2-3 GB)
+  - *Lite:* Imatges simplificades (quadrat negre + metadades) per a testing ràpid (~50-100 MB)
+
 ## Requisits tècnics
 
 ### Entorn
@@ -86,7 +105,15 @@ Les metadades estan embegudes directament dins els fitxers PNG (no en fitxers se
 
 ### Llibreries
 
+#### Lliurament 1
+
 - `json` - Manipulació de galeries
+
+#### Lliurament 2
+
+- **Només la Python Standard Library** - No es permeten llibreries externes com NumPy, SciPy, scikit-learn, etc.
+- Estructures de dades integrades: `collections`, `heapq`, `json`
+- Matemàtiques bàsiques: `math`, `random`
 
 ### Format d'imatges
 
