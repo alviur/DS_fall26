@@ -20,9 +20,9 @@ import uuid
 # Selecció del vostre PATH amb les imatges generades
 #
 ROOT_DIR  = r"../generated_images"                                   # Github
-#ROOT_DIR = r"E:\_UAB\ED\DS_fall25-main\generated_images"            # Windows
-#ROOT_DIR = r"/opt/_uab/ed/DS_fall25-main/generated_images"          # Linux
-#ROOT_DIR = r"/Users/usuari/_uab/ed/DS_fall25-main/generated_images" # MacOS
+#ROOT_DIR = r"E:\_UAB\ED\DS_fall26-main\generated_images"            # Windows
+#ROOT_DIR = r"/opt/_uab/ed/DS_fall26-main/generated_images"          # Linux
+#ROOT_DIR = r"/Users/usuari/_uab/ed/DS_fall26-main/generated_images" # MacOS
 #
 # Nota: En plataforma Windows cal utilitzar strings literals, doncs el símbol
 #       backslash (\) s'utilitza per defecte com ESCAPE. Per definir un string
