@@ -29,7 +29,10 @@ L'objectiu principal és aplicar estructures de dades complexes per optimitzar l
 │   │   └── SearchMetadata.py        # Template: Cerca per metadades
 │   └── Submission_2/            # Segon lliurament (Sistema de Recomanació)
 │       ├── RecommenderSystem.py     # Sistema de recomanació amb CLIP embeddings
-│       └── autograder_student.py    # Template de l'autograder per testing
+│       ├── autograder_student.py    # Autograder local (mateix codi que Gradescope)
+│       ├── runner.py                # Executa les vostres classes (usat per l'autograder)
+│       ├── scoring.py               # Calcula la puntuació (usat per l'autograder)
+│       └── sample_answers/          # Respostes de mostra per a l'autograder local
 │
 └── media/                       # Imatges i diagrames de la guia
 ```

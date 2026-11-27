@@ -20,6 +20,18 @@ import json
 from datetime import datetime
 
 
+class Gallery:
+    """Minimal result container: find_similar_images() must return an object
+    with an `images` attribute holding the list of UUIDs (you can also use your
+    own Gallery class, as long as it has `images`)."""
+
+    def __init__(self):
+        self.gallery_name = ""
+        self.description = ""
+        self.created_date = datetime.now().strftime("%Y-%m-%d")
+        self.images = []
+
+
 class RecommenderSystem:
     """
     Recommender system for finding similar images and generating transition paths.
@@ -35,7 +47,7 @@ class RecommenderSystem:
 
         Args:
             vectors_path: Path to JSON file with CLIP embeddings
-                         Format: {"uuid": {"image_embedding": [...], "text_embedding": [...]}, ...}
+                         Format: {"vectors": {"uuid": {"image_embedding": [...], "text_embedding": [...] or None}, ...}}
             image_data: (Optional) ImageData instance from Phase 1 for metadata access
             image_id: (Optional) ImageID instance from Phase 1 for UUID mapping
         """
@@ -155,7 +167,7 @@ class RecommenderSystem:
 
         Evaluation:
         - Metric: Word overlap (how many words match ground truth)
-        - Timing: Tested on ~10 transitions
+        - Timing: Tested on 3 transitions
         - Scoring: 30 pts for quality + 10 pts for speed
 
         Algorithm overview:
