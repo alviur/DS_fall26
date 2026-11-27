@@ -714,17 +714,17 @@ results = searcher.prompt("portrait")   # Una altra paraula; el test en fa 95
 
 ### ⚠️ Correctesa Obligatòria
 
-**IMPORTANT:** Encara que només es puntua la velocitat, **els resultats han de ser 100% correctes**. Qualsevol cerca amb resultats incorrectes rebrà una **penalització de temps ×100**, fent que la puntuació sigui pràcticament zero.
+**IMPORTANT:** Encara que només es puntua la velocitat, **els resultats han de ser 100% correctes**. Si alguna cerca retorna un resultat incorrecte (nombre d'imatges, imatges diferents, repetides) o dona error, **la Fase 1 val 0 punts**.
 
 **Verificació:** Abans d'optimitzar, assegureu-vos que totes les cerques retornen exactament els UUIDs esperats, sense duplicats ni omissions.
 
 
 ### Com es puntua
 
-La puntuació depèn **només del temps d'execució** (quant més ràpid, més punts):
+Si totes les cerques són correctes, la puntuació depèn **només del temps d'execució** (quant més ràpid, més punts). El temps inclou crear el `SearchMetadata(image_data)`, de manera que construir-hi un índex també compta:
 
 ```
-Fase 1 Score = 20 × max(0, (20.0 - min(temps, 20.0)) / 20.0)
+Fase 1 Score = 20 × max(0, (20.0 - min(temps, 20.0)) / 20.0)     (0 si alguna cerca és incorrecta)
 ```
 
 ---
@@ -741,11 +741,15 @@ Rebeu un fitxer JSON amb vectors CLIP precalculats:
 
 ```json
 {
-  "uuid_1": [0.234, -0.567, 0.891, ...],    // vector de 512 dimensions
-  "uuid_2": [0.241, -0.571, 0.887, ...],
-  ...
+  "vectors": {
+    "uuid_1": {"image_embedding": [0.234, -0.567, ...], "text_embedding": [...]},
+    "uuid_2": {"image_embedding": [0.241, -0.571, ...], "text_embedding": null},
+    ...
+  }
 }
 ```
+
+Cada `image_embedding` té 512 dimensions (vegeu la secció 8.3). Els UUIDs d'aquesta fase són els noms dels fitxers sense `.png`.
 
 ### Sortida esperada
 
@@ -759,13 +763,15 @@ gallery = system.find_similar_images("uuid_query", k=10)
 # gallery.images = ["uuid_1", "uuid_2", ..., "uuid_10"]
 ```
 
+L'objecte retornat ha de tenir un atribut `images` amb la llista d'UUIDs (també s'accepta retornar directament la llista).
+
 ### Com es puntua
 
 La puntuació es divideix en **dos components**:
 
-1. **Velocitat** (0-15 pts): Quant més ràpid processeu les 1,000 queries
+1. **Velocitat** (0-15 pts): Quant més ràpid processeu les 1,000 queries. Es multiplica per la precisió, de manera que respondre ràpid amb resultats incorrectes no dona punts:
    ```
-   Speed  = 15 × max(0, (120.0 - min(temps_total, 120.0)) / 120.0)
+   Speed  = 15 × max(0, (120.0 - min(temps_total, 120.0)) / 120.0) × recall@100
    ```
 
 2. **Precisió** (0-25 pts): Quant d'acurades són els vostres resultats
@@ -782,10 +788,13 @@ Phase 2 Score = min(40, Speed + Precision)
 
 | Preprocess | Temps Total | Precisió | Speed  | Precision  | Total |
 |------------|-------------|----------|------------|-----------------|-------|
-| 0.5s       | 3s          | 95%      | 14.6       | 23.75           | **38.4** |
-| 0s         | 15s         | 100%     | 12.5       | 25.0            | **37.5** |
-| 0s         | 40s         | 70%      | 9.9        | 17.5            | **27.4** |
-| 0s         | 40s         | 50%      | 9.9        | 12.5            | **22.4** |
+| 0.5s       | 3s          | 95%      | 13.9       | 23.75           | **37.6** |
+| 0s         | 15s         | 100%     | 13.1       | 25.0            | **38.1** |
+| 0s         | 40s         | 70%      | 7.0        | 17.5            | **24.5** |
+| 0s         | 40s         | 50%      | 5.0        | 12.5            | **17.5** |
+| 0s         | 300s (força bruta) | 100% | 0      | 25.0            | **25.0** |
+
+Els punts de velocitat només compten si les 1,000 consultes s'han respost sense errors i dins del temps límit (vegeu la secció 7.3).
 
 
 #### Per a **Precisió** (prioritat alta)
@@ -831,9 +840,9 @@ Cada pas és semblant al pas anterior, però s'apropa gradualment al destí.
 
 Dos components:
 
-1. **Velocitat** (0-10 pts):
+1. **Velocitat** (0-10 pts), multiplicada per la qualitat:
    ```
-   Time Bonus = 10 × max(0, (300.0 - min(temps, 300.0)) / 300.0)
+   Time Bonus = 10 × max(0, (300.0 - min(temps, 300.0)) / 300.0) × quality_score
    ```
 
 2. **Qualitat** (0-30 pts):
@@ -854,9 +863,11 @@ Phase 3 Score = min(40, Time Bonus + Quality )
 | Temps | Qualitat | Time | Quality | Total |
 |-------|----------|-----------|---------------|-------|
 | 10s   | 100%     | 9.7       | 30.0          | **39.7** |
-| 60s   | 80%      | 8.0       | 24.0          | **32.0** |
-| 127s  | 41.7%    | 5.8       | 12.5          | **18.3** |
+| 60s   | 80%      | 6.4       | 24.0          | **30.4** |
+| 127s  | 41.7%    | 2.4       | 12.5          | **14.9** |
 | 300s+ | 60%      | 0         | 18.0          | **18.0** |
+
+El test té 3 transicions. Els punts de temps només compten si totes tres retornen una llista de prompts sense errors i dins del temps límit.
 
 ### Consells per optimitzar
 
@@ -1017,13 +1028,24 @@ No es tracta només de "fer que funcioni". Es tracta de:
 La màquina virtual assignada a Gradescope té:
 - **CPU:** 2.0 cores
 - **RAM:** 3.0 GB
-- **Timeout:** 30 minuts màxim
+
+Cada part de l'execució té el seu propi temps límit:
+
+| Part | Límit | Què inclou |
+|------|-------|------------|
+| Càrrega de dades | 3 min | `ImageFiles`, `ImageID` i `ImageData` amb les 10,000 imatges |
+| Fase 1 | 2 min | `SearchMetadata(image_data)` i les 95 cerques |
+| Preprocessament | 10 min | `RecommenderSystem(...)` i `preprocess()` (no puntua) |
+| Fase 2 | 7 min | Les 1,000 crides a `find_similar_images` |
+| Fase 3 | 6 min | Les 3 crides a `find_transition_prompts` |
+
+Si una part supera el seu límit, s'atura, es puntua el que s'havia fet i les fases següents s'executen igualment. Gradescope sempre us mostrarà un resultat.
 
 ## 7.4. Per què les solucions de força bruta fallen?
 
 **Fase 2 - Similitud d'Imatges:**
 ```python
-# ❌ FORÇA BRUTA (FALLARÀ)
+# ❌ FORÇA BRUTA (MASSA LENTA)
 def find_similar_images(query_uuid, k=10):
     similarities = []
     for uuid in all_uuids:  # 10,000 imatges
@@ -1032,8 +1054,8 @@ def find_similar_images(query_uuid, k=10):
     similarities.sort(reverse=True)
     return similarities[:k]
 
-# Per 1,000 queries: 10,000 × 1,000 = 10 MILIONS de comparacions
-# Temps estimat: > 30 minuts → TIMEOUT
+# Per 1,000 queries: 10,000 × 1,000 = 10 MILIONS de comparacions de 512 dimensions
+# Temps estimat en Python pur: uns 3-7 minuts → precisió màxima però 0 punts de velocitat (25/40)
 ```
 
 **Fase 3 - Camins de Transició:**
@@ -1128,20 +1150,20 @@ Fitxer esquelet amb les signatures dels mètodes i documentació detallada. Incl
 
 ### 8.5. Codi de Mostra de l'Autograder (`autograder_student.py`)
 
-Per ajudar-vos a entendre com es farà l'avaluació a Gradescope i guiar-vos en cas que trobeu errors durant la correcció, us proporcionem **fragments del nucli principal de l'autograder**.
+A `src/Submission_2/` teniu l'autograder per provar el vostre codi en local. **Executa el mateix codi que Gradescope** (`runner.py` executa les vostres classes i `scoring.py` les puntua), amb respostes de mostra:
 
-##### Com usar aquest recurs:
+- **Fase 1:** les mateixes 95 cerques de prompt que Gradescope, amb el nombre de resultats esperat.
+- **Fase 2:** 100 consultes de mostra amb la seva solució (Gradescope en fa 1,000 de diferents).
+- **Fase 3:** 2 transicions de mostra amb la seva solució (Gradescope en fa 3 de diferents).
 
-✅ Entendre què s'avalua
-✅ Veure com es calculen puntuacions
-✅ Debugging d'errors de Gradescope
-✅ Especificació tècnica dels mètodes
-✅ Pot adaptar-se per testing bàsic local
+**Com fer-lo servir:**
+1. Copieu `autograder_student.py`, `runner.py`, `scoring.py` i la carpeta `sample_answers/` a la carpeta on teniu el vostre codi (`ImageFiles.py`, `ImageID.py`, `ImageData.py`, `SearchMetadata.py`, `RecommenderSystem.py` i `cfg.py`).
+2. A `cfg.py`, poseu `ROOT_DIR` apuntant a la carpeta `images/` de l'Image Corpus 10K.
+3. Executeu `python autograder_student.py camí/a/clip_vectors_2026.json`.
 
-❌ NO és executable tal com es proporciona
-❌ NO substitueix la submissió a Gradescope
-❌ NO cobreix tots els casos de test reals
-❌ NO aplica les mateixes validacions
+Els temps de les Fases 2 i 3 s'escalen per estimar el temps de les 1,000 consultes i de les 3 transicions. És una estimació: la màquina de Gradescope pot ser més lenta que la vostra, i hi fa servir consultes diferents.
+
+**Recomanació:** executeu-lo des del primer dia. Si funciona en local però no a Gradescope, gairebé sempre és un temps límit esgotat (vegeu la secció 7.3).
 
 
 ---
@@ -1155,14 +1177,14 @@ Heu de submetre:
 - **RecommenderSystem.py** - Classe principal que implementa:
   - `__init__(vectors_path, image_data=None, image_id=None)`
   - `preprocess()` - Prepara les estructures de dades
-  - `find_similar_images(uuid, k=10) -> Gallery` - Retorna galeria amb similars
+  - `find_similar_images(uuid, k=10) -> Gallery` - Retorna un objecte amb l'atribut `images` (llista d'UUIDs)
   - `find_transition_prompts(uuid1, uuid2) -> list` - Retorna camí de transició
 - **ImageData.py**
 - **ImageFiles.py**
 - **ImageID.py**
 - **SearchMetadata.py**
 
-Tindreu també l'arxiu cfg.py disponible (del lliurament 1) i podeu submetre qualsevol altre .py que necessiteu.
+No cal pujar `cfg.py`: Gradescope fa servir el seu, amb `ROOT_DIR` apuntant a l'Image Corpus 10K. Podeu submetre qualsevol altre .py que necessiteu.
 
 
 ### Informe Tècnic (Docum.PDF)
@@ -1216,7 +1238,7 @@ El vostre informe ha d'incloure:
 
 **Podeu obtenir un 10 en el Lliurament 2 sense competir.** La qualificació del projecte es basa en:
 - ✅ **Correctesa:** El vostre codi funciona correctament amb les 10,000 imatges
-- ✅ **Eficiència raonable:** Passa els tests dins del timeout de 30 minuts (score>50)
+- ✅ **Eficiència raonable:** Passa els tests dins dels temps límit de la secció 7.3 (score>50)
 - ✅ **Documentació:** Lliureu un informe tècnic complet (Docum.PDF)
 - ✅ **Qualitat del codi:** Implementació neta i ben estructurada
 
