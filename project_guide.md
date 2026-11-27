@@ -593,7 +593,7 @@ Els embeddings **no es calculen amb fórmules matemàtiques simples**. En lloc d
    └─ Resultat: Model CLIP entrenat
 
 2. ÚS (el que fareu vosaltres)
-   ├─ Carregueu vectors CLIP precalculats (clip_vectors.json)
+   ├─ Carregueu vectors CLIP precalculats (clip_vectors_2026.json)
    ├─ Compareu vectors amb cosine similarity
    └─ Trobeu imatges similars o recomaneu prompts
 ```
@@ -663,7 +663,7 @@ La competició us demana implementar un sistema de recomanació eficient d'imatg
 
 ### Dataset de la Competició
 
-**Important:** Mentre que per al desenvolupament del lliurament 1 teniu un conjunt de 1,000 imatges, l'avaluació automàtica de la competició utilitzarà un **conjunt de 10,000 imatges** diferents.
+**Important:** Mentre que per al desenvolupament del lliurament 1 teniu un conjunt de 1,000 imatges, l'avaluació automàtica de la competició utilitzarà un **conjunt de 10,000 imatges**. És exactament el mateix conjunt que us proporcionem (vegeu la secció 8): mateixos fitxers, mateixes metadades i mateixos vectors CLIP. No hi ha cap sorpresa a Gradescope.
 
 L'autograder (Gradescope):
 1. Carregarà el vostre codi amb el path al directori de 10,000 imatges
@@ -696,12 +696,9 @@ La Fase 1 avalua l'**eficiència de la vostra implementació de SearchMetadata**
 
 ### Què es testa
 
-Utilitzarem la vostra classe `SearchMetadata` (implementada al Lliurament 1) per executar múltiples cerques sobre el conjunt de test:
+Utilitzarem la vostra classe `SearchMetadata` (implementada al Lliurament 1) per executar múltiples cerques sobre el conjunt de test. **Totes les cerques són cerques de prompt**: subcadenes dins la descripció (`"cyberpunk"`, `"portrait"`, `"landscape"`...), sensibles a majúscules i minúscules, com al Lliurament 1.
 
-- **Prompt**: Cerques de subcadenes dins la descripció (`"cyberpunk"`, `"portrait"`, `"landscape"`)
-- **Model**: Filtrat per model de generació (`"SD2"`, `"Midjourney"`, `"DALLE2"`)
-- **Data**: Cerca per data de creació (`"2024-10-15"`)
-- **Altres camps**: Sampler, CFG_Scale, Steps, Seed
+**Metadades del conjunt de 10,000 imatges:** les imatges només tenen els camps `Prompt` i `Seed`, amb els mateixos noms que al Lliurament 1, de manera que el vostre `ImageData` els llegeix sense canvis. La resta de camps (Model, Sampler, CFG_Scale, Steps, Created_Date, Generated) no hi són, i 3,942 imatges no tenen cap metadada. Per als camps que falten, el vostre codi ha de fer el mateix que al Lliurament 1: retornar `"None"`.
 
 **Exemple d'execució del test:**
 ```python
@@ -710,11 +707,10 @@ searcher = SearchMetadata(image_data)
 
 # L'autograder executarà queries com aquestes i mesurarà el temps
 results = searcher.prompt("cyberpunk")  # Ha de retornar tots els UUIDs amb "cyberpunk" al prompt
-results = searcher.model("SD2")         # Ha de retornar tots els UUIDs generats amb SD2
-results = searcher.and_operator(results1, results2)  # Intersecció de resultats
+results = searcher.prompt("portrait")   # Una altra paraula; el test en fa 95
 ```
 
-**Focus principal:** El test se centrarà especialment en **cerques de prompt**, ja que són les més costoses (text matching en strings llargs) i les més freqüents en un gestor d'imatges generades.
+**Per què només prompts:** són les cerques més costoses (text matching en strings llargs) i les més freqüents en un gestor d'imatges generades. Les altres cerques de `SearchMetadata` no es testen en aquest lliurament.
 
 ### ⚠️ Correctesa Obligatòria
 
@@ -756,7 +752,7 @@ Rebeu un fitxer JSON amb vectors CLIP precalculats:
 Per a cada query UUID, retorna una galeria amb els 10 UUIDs més similars (visualment), ordenats per similitud descendent:
 
 ```python
-system = RecommenderSystem("clip_vectors.json")
+system = RecommenderSystem("clip_vectors_2026.json")
 system.preprocess()  # Prepara les estructures de dades
 
 gallery = system.find_similar_images("uuid_query", k=10)
@@ -1072,45 +1068,50 @@ competition_images_full/
 - **Mida:** ~2-3 GB (segons compressió PNG)
 - **Ús:** Visualització, validació visual, testing final
 
-### 8.2. Conjunt Optimitzat per Desenvolupament (10,000 imatges)
+### 8.2. Conjunt Optimitzat per Desenvolupament: Image Corpus 10K (10,000 imatges)
 ```
-competition_images_lite/
+images/
 ├── 00a1b2c3-d4e5-6789-abcd-ef0123456789.png  (quadrat negre + metadades)
 ├── 01b2c3d4-e5f6-789a-bcde-f01234567890.png
 ├── ...
 └── ff9e8d7c-6b5a-4321-0fed-cba987654321.png
 ```
 
-- **Contingut:** Fitxers PNG amb un quadrat negre 64×64 però **metadades originals intactes**
-- **Mida:** ~50-100 MB (molt més lleugeres)
+- **Contingut:** Fitxers PNG amb un quadrat negre de 10×10 píxels però **metadades originals intactes** (`Prompt` i `Seed`)
+- **Mida:** ~4 MB comprimit (molt més lleugeres)
+- **Gradescope:** fa servir exactament aquestes imatges
 - **Ús:** Desenvolupament ràpid, testing de cerca i metadades, debugging
 
 #### ⚠️ Important: Ambdós conjunts són idèntics en metadades
 
 Els dos directoris contenen:
 - ✅ **Mateixos noms d'arxiu** (UUIDs idèntics)
-- ✅ **Mateixes metadades embegudes** (Prompt, Model, Seed, etc.)
+- ✅ **Mateixes metadades embegudes** (`Prompt` i `Seed`)
 - ✅ **Mateix nombre d'imatges** (10,000)
 - ❌ **Diferents píxels** (complet vs. quadrat negre)
 
-### 8.3. Vectors CLIP (`clip_vectors.json`)
+### 8.3. Vectors CLIP (`clip_vectors_2026.json`)
 
-Fitxer JSON de ~250 MB amb vectors precomputats per a totes les 10,000 imatges:
+Fitxer JSON de ~176 MB amb vectors precomputats per a totes les 10,000 imatges (model CLIP ViT-B/32). Gradescope fa servir exactament aquest fitxer:
 ```json
 {
   "vectors": {
     "nom-sense-extensio": {
       "image_embedding": [512 floats],  // Contingut visual
-      "text_embedding": [512 floats]    // Significat del prompt
+      "text_embedding": [512 floats]    // Significat del prompt (o null)
     },
     ...
   }
 }
 ```
+
+- `image_embedding` existeix per a **totes** les imatges. És el que fa servir l'avaluació de les Fases 2 i 3.
+- `text_embedding` és el vector CLIP del **prompt original** de la imatge. Per a 3,832 imatges no el tenim i hi trobareu `"text_embedding": null`. El podeu fer servir si us és útil, però cap fase el necessita.
+
 Codi d'exemple per carregar l'Image Embedding de la imatge 0004c805-4d1a-45d5-b062-d0a06f0205f3.png
 
 ```python
-with open("clip_vectors.json", "r") as f:
+with open("clip_vectors_2026.json", "r") as f:
     vectors = json.load(f)["vectors"]
 
 vec = vectors["0004c805-4d1a-45d5-b062-d0a06f0205f3"]["image_embedding"]

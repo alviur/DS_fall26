@@ -91,10 +91,10 @@ Les metadades estan embegudes directament dins els fitxers PNG (no en fitxers se
 
 ### Recursos addicionals per al Lliurament 2
 
-- **clip_vectors.json:** Vectors CLIP precalculats (embeddings de 512 dimensions) per a totes les 10,000 imatges
+- **clip_vectors_2026.json:** Vectors CLIP precalculats (embeddings de 512 dimensions) per a totes les 10,000 imatges
 - **Dos conjunts d'imatges:**
   - *Full:* Imatges completes amb tota la qualitat visual (~2-3 GB)
-  - *Lite:* Imatges simplificades (quadrat negre + metadades) per a testing ràpid (~50-100 MB)
+  - *Lite (Image Corpus 10K):* Imatges simplificades (quadrat negre de 10×10 + metadades `Prompt` i `Seed`) per a testing ràpid (~4 MB)
 
 ## Requisits tècnics
 
