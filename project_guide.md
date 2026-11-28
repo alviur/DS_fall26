@@ -1177,7 +1177,7 @@ Heu de submetre:
 - **RecommenderSystem.py** - Classe principal que implementa:
   - `__init__(vectors_path, image_data=None, image_id=None)`
   - `preprocess()` - Prepara les estructures de dades
-  - `find_similar_images(uuid, k=10) -> Gallery` - Retorna un objecte amb l'atribut `images` (llista d'UUIDs)
+  - `find_similar_images(uuid, k=10) -> Gallery` - Retorna un objecte amb l'atribut `images` (llista d'UUIDs). La plantilla ja inclou una classe `Gallery` mínima a `RecommenderSystem.py`, per això no cal pujar `Gallery.py`. Si preferiu fer servir la vostra `Gallery` del primer lliurament, pugeu també `Gallery.py` (i els arxius que importi).
   - `find_transition_prompts(uuid1, uuid2) -> list` - Retorna camí de transició
 - **ImageData.py**
 - **ImageFiles.py**
